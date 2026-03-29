@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MasterCard Banking</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: white;
+            font-family: -apple-system, sans-serif;
+            margin: 0;
+            padding-bottom: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Зона вызова админки */
+        #secret-trigger { width: 60px; height: 60px; position: absolute; top: 0; left: 0; z-index: 1000; }
+
+        /* Карта */
+        .card {
+            width: 90%; max-width: 350px; height: 210px;
+            background: linear-gradient(135deg, #1e1e1e 0%, #000000 100%);
+            border-radius: 16px; padding: 25px; box-sizing: border-box;
+            position: relative; margin-top: 30px; border: 1px solid #333;
+        }
+        .chip { width: 45px; height: 35px; background: linear-gradient(135deg, #e5c06d, #b8860b); border-radius: 6px; margin-bottom: 20px; }
+        .balance-amount { font-size: 28px; font-weight: 600; margin-top: 5px; }
+        .card-number { position: absolute; bottom: 25px; left: 25px; font-family: monospace; font-size: 16px; color: #aaa; }
+        .mc-logo { position: absolute; bottom: 20px; right: 20px; display: flex; }
+        .circle { width: 35px; height: 35px; border-radius: 50%; }
+        .red { background: #eb001b; margin-right: -14px; opacity: 0.9; }
+        .orange { background: #ff5f00; opacity: 0.9; }
+
+        /* Секция переводов */
+        .transfer-section {
+            width: 90%; max-width: 350px; margin-top: 30px;
+            background: #151517; padding: 20px; border-radius: 20px; border: 1px solid #222;
+        }
+        h2 { font-size: 18px; margin-bottom: 20px; color: #fff; }
+        
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; color: #666; margin-bottom: 5px; }
+        .transfer-input {
+            width: 100%; background: #222; border: 1px solid #333; border-radius: 10px;
+            padding: 12px; color: white; box-sizing: border-box; font-size: 14px;
+        }
+
+        .btn-send {
+            width: 100%; padding: 15px; background: #ff5f00; border: none;
+            border-radius: 12px; color: white; font-weight: bold; font-size: 16px; cursor: pointer;
+            margin-top: 10px; transition: 0.3s;
+        }
+
+        /* Модальные окна (Админка и Процесс) */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 2000;
+        }
+        .modal {
+            background: #1c1c1e; width: 85%; max-width: 320px; padding: 25px;
+            border-radius: 24px; text-align: center; border: 1px solid #333;
+        }
+        .close { position: absolute; top: 15px; right: 15px; font-size: 24px; color: #555; }
+
+        /* Анимация загрузки */
+        .loader {
+            border: 4px solid #333; border-top: 4px solid #ff5f00;
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="secret-trigger" onclick="handleAdmin()"></div>
+
+    <!-- Карта -->
+    <div class="card">
+        <div class="chip"></div>
+        <div style="font-size: 12px; color: #888;">Мой баланс</div>
+        <div class="balance-amount" id="mainBal">5.40 BYN</div>
+        <div class="card-number" id="mainNum">•••• 7741</div>
+        <div class="mc-logo"><div class="circle red"></div><div class="circle orange"></div></div>
+    </div>
+
+    <!-- Форма перевода -->
+    <div class="transfer-section">
+        <h2>Новый перевод</h2>
+        <div class="input-group">
+            <label>ПОЛУЧАТЕЛЬ (ИМЯ)</label>
+            <input type="text" class="transfer-input" id="tName" placeholder="Напр: Иван И.">
+        </div>
+        <div class="input-group">
+            <label>НОМЕР КАРТЫ ИЛИ ТЕЛЕФОНА</label>
+            <input type="text" class="transfer-input" id="tTarget" placeholder="+375 / 4412...">
+        </div>
+        <div class="input-group">
+            <label>СУММА (BYN)</label>
+            <input type="number" class="transfer-input" id="tAmount" placeholder="0.00">
+        </div>
+        <div class="input-group">
+            <label>СООБЩЕНИЕ</label>
+            <input type="text" class="transfer-input" id="tMsg" placeholder="На подарок">
+        </div>
+        <button class="btn-send" onclick="startTransfer()">ОТПРАВИТЬ</button>
+    </div>
+
+    <!-- Окно загрузки/успеха -->
+    <div id="statusOverlay" class="overlay">
+        <div class="modal" id="statusModal">
+            <div id="loaderCont"><div class="loader"></div><p>Обработка платежа...</p></div>
+            <div id="successCont" style="display:none;">
+                <div style="font-size: 50px; color: #4cd137;">✓</div>
+                <h3 style="margin: 10px 0;">Успешно!</h3>
+                <p id="successTxt" style="font-size: 14px; color: #aaa;"></p>
+                <button class="btn-send" onclick="closeStatus()">ОТЛИЧНО</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Админка -->
+    <div id="adminPanel" class="overlay">
+        <div class="modal">
+            <div class="close" onclick="closeAdmin()">×</div>
+            <h3 style="color:#ff5f00">ADMIN PANEL</h3>
+            <input type="text" id="setBal" class="transfer-input" style="margin-bottom:10px" placeholder="Новый баланс (цифры)">
+            <input type="text" id="setNum" class="transfer-input" placeholder="Номер карты">
+            <button class="btn-send" onclick="applyAdmin()">ПРИМЕНИТЬ</button>
+        </div>
+    </div>
+
+    <script>
+        let currentBalance = 5.40;
+        let clicks = 0;
+        let timer;
+
+        function handleAdmin() {
+            clicks++; clearTimeout(timer);
+            timer = setTimeout(() => clicks = 0, 500);
+            if (clicks === 3) document.getElementById('adminPanel').style.display = 'flex';
+        }
+
+        function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+
+        function applyAdmin() {
+            const b = document.getElementById('setBal').value;
+            const n = document.getElementById('setNum').value;
+            if(b) {
+                currentBalance = parseFloat(b.replace(/\s/g, ''));
+                updateDisplay();
+            }
+            if(n) document.getElementById('mainNum').innerText = n;
+            closeAdmin();
+        }
+
+        function updateDisplay() {
+            document.getElementById('mainBal').innerText = currentBalance.toLocaleString('ru-RU', {minimumFractionDigits: 2}) + " BYN";
+        }
+
+        function startTransfer() {
+            const amount = parseFloat(document.getElementById('tAmount').value);
+            const name = document.getElementById('tName').value;
+            if(!amount || !name) return alert("Введите имя и сумму!");
+
+            document.getElementById('statusOverlay').style.display = 'flex';
+            document.getElementById('loaderCont').style.display = 'block';
+            document.getElementById('successCont').style.display = 'none';
+
+            setTimeout(() => {
+                currentBalance -= amount;
+                updateDisplay();
+                document.getElementById('loaderCont').style.display = 'none';
+                document.getElementById('successCont').style.display = 'block';
+                document.getElementById('successTxt').innerText = `Перевод ${amount} BYN для ${name} выполнен.`;
+            }, 2000);
+        }
+
+        function closeStatus() { document.getElementById('statusOverlay').style.display = 'none'; }
+        
+        function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+    </script>
+</body>
+</html>
