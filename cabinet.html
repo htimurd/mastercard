@@ -3,76 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Личный Кабинет</title>
+    <title>История операций</title>
     <style>
-        body { background: #000; color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; }
-        .app-wrapper { width: 100%; max-width: 900px; padding: 40px 20px; display: flex; flex-wrap: wrap; gap: 30px; }
-        
-        .back-btn { color: #ff5f00; text-decoration: none; font-size: 18px; font-weight: bold; display: block; margin-bottom: 20px; }
-        
-        .sidebar { flex: 1; min-width: 300px; }
-        .main-content { flex: 2; min-width: 320px; }
-
-        .user-card { background: #151517; padding: 30px; border-radius: 24px; border: 1px solid #222; position: sticky; top: 40px; }
-        .label { color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
-        .val { font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #ff5f00; }
-
-        .history-item { background: #1c1c1e; padding: 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-left: 5px solid #333; transition: 0.2s; }
-        .history-item:hover { border-left-color: #ff5f00; background: #222; }
-        .hist-info div:first-child { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
-        .hist-info div:last-child { font-size: 12px; color: #666; }
-        .hist-sum { font-weight: 800; font-size: 16px; text-align: right; }
-
-        @media (max-width: 768px) {
-            .app-wrapper { flex-direction: column; padding: 20px; }
-            .user-card { position: static; }
-        }
+        body { background: #0a0a0a; color: #fff; font-family: -apple-system, sans-serif; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 400px; }
+        .header { display: flex; align-items: center; margin-bottom: 30px; }
+        .back-btn { color: #ff5f00; text-decoration: none; font-size: 24px; margin-right: 20px; }
+        .hist-item { background: #151517; padding: 15px; border-radius: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #ff5f00; }
+        .hist-info div:first-child { font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+        .hist-info div:last-child { font-size: 11px; color: #555; }
+        .amount { font-weight: bold; color: #fff; }
     </style>
 </head>
 <body>
-
-    <div class="app-wrapper">
-        <!-- СЛЕВА: ИНФО -->
-        <div class="sidebar">
-            <a href="index.html" class="back-btn">← НА ГЛАВНУЮ</a>
-            <div class="user-card">
-                <div class="label">Ваш текущий баланс</div>
-                <div class="val" id="cabBal">0.00 BYN</div>
-                <div class="label">Привязанная карта</div>
-                <div id="cabNum" style="font-family: monospace; font-size: 16px; color: #aaa;">0000 0000 0000 0000</div>
-                <hr style="border: 0; border-top: 1px solid #333; margin: 25px 0;">
-                <p style="font-size: 13px; color: #555;">Все данные хранятся локально в вашем браузере.</p>
-            </div>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">←</a>
+            <h2 style="margin:0">Транзакции</h2>
         </div>
 
-        <!-- СПРАВА: ИСТОРИЯ -->
-        <div class="main-content">
-            <h2 style="margin-top:0; font-size: 24px;">История операций</h2>
-            <div id="historyBox"></div>
+        <div id="historyList">
+            <!-- Список пуст -->
         </div>
     </div>
 
     <script>
-        const balance = localStorage.getItem('balance') || "0.00";
-        const cardNum = localStorage.getItem('cardNumber') || "---";
-        const appCurrency = localStorage.getItem('appCurrency') || "BYN";
-        const history = JSON.parse(localStorage.getItem('transfers') || "[]");
+        const user = JSON.parse(localStorage.getItem('mc_current_user'));
+        const allHistory = JSON.parse(localStorage.getItem('mc_history') || "[]");
 
-        document.getElementById('cabBal').innerText = parseFloat(balance).toLocaleString('ru-RU', {minimumFractionDigits: 2}) + " " + appCurrency;
-        document.getElementById('cabNum').innerText = cardNum;
+        const list = document.getElementById('historyList');
 
-        const container = document.getElementById('historyBox');
-        if(history.length === 0) {
-            container.innerHTML = '<div style="background:#111; padding:40px; border-radius:20px; text-align:center; color:#444;">У вас пока нет транзакций</div>';
+        if(!user) {
+            window.location.href = 'index.html';
+        }
+
+        // Фильтруем историю: показываем только те переводы, где отправитель — текущий пользователь
+        const myHistory = allHistory.filter(h => h.fromPhone === user.phone);
+
+        if(myHistory.length === 0) {
+            list.innerHTML = '<p style="color:#333; text-align:center; margin-top:50px;">У вас еще не было переводов</p>';
         } else {
-            history.forEach(item => {
-                container.innerHTML += `
-                    <div class="history-item">
+            myHistory.forEach(h => {
+                list.innerHTML += `
+                    <div class="hist-item">
                         <div class="hist-info">
-                            <div>${item.name}</div>
-                            <div>${item.date} • ${item.target}</div>
+                            <div>Кому: ${h.toName}</div>
+                            <div>${h.date} • ${h.toPhone}</div>
                         </div>
-                        <div class="hist-sum">-${item.amount} ${item.currency}</div>
+                        <div class="amount">-${h.amount.toFixed(2)}</div>
                     </div>
                 `;
             });
