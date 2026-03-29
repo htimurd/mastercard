@@ -1,1 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мой Профиль MasterCard</title>
+    <style>
+        body { background: #0a0a0a; color: #fff; font-family: -apple-system, sans-serif; margin: 0; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 400px; text-align: center; }
+        .header { display: flex; align-items: center; margin-bottom: 30px; }
+        .back-btn { color: #ff5f00; text-decoration: none; font-size: 24px; margin-right: 20px; }
+        .avatar { width: 100px; height: 100px; background: #151517; border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 40px; border: 2px solid #ff5f00; }
+        .info-card { background: #151517; border-radius: 20px; padding: 10px 20px; border: 1px solid #222; }
+        .row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #222; font-size: 14px; }
+        .row:last-child { border: none; }
+        .label { color: #666; }
+        .btn-exit { width: 100%; padding: 16px; background: #eb001b; border: none; border-radius: 14px; color: white; font-weight: bold; margin-top: 30px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">←</a>
+            <h2 style="margin:0">Профиль</h2>
+        </div>
 
+        <div class="avatar">👤</div>
+        <h2 id="dispName" style="margin-bottom: 5px;">Пользователь</h2>
+        <p id="dispPhone" style="color: #666; margin-top: 0; font-size: 14px;">+000...</p>
+
+        <div class="info-card">
+            <div class="row"><span class="label">Статус</span><span style="color:#ff5f00">Активен</span></div>
+            <div class="row"><span class="label">Баланс</span><span id="dispBal">0.00 BYN</span></div>
+            <div class="row"><span class="label">Тип карты</span><span>MasterCard Black</span></div>
+        </div>
+
+        <button class="btn-exit" onclick="logout()">ВЫЙТИ ИЗ АККАУНТА</button>
+    </div>
+
+    <script>
+        // Получаем текущего пользователя из памяти (нужно сохранить его в index.html при входе)
+        const currentUser = JSON.parse(localStorage.getItem('mc_current_user'));
+
+        if(!currentUser) {
+            window.location.href = 'index.html';
+        } else {
+            document.getElementById('dispName').innerText = currentUser.name;
+            document.getElementById('dispPhone').innerText = currentUser.phone;
+            document.getElementById('dispBal').innerText = currentUser.balance.toFixed(2) + " BYN";
+        }
+
+        function logout() {
+            localStorage.removeItem('mc_current_user'); // Стираем только сессию входа
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>
