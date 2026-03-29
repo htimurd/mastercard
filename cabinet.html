@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный Кабинет</title>
+    <style>
+        body { background: #000; color: white; font-family: -apple-system, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; }
+        .app-wrapper { width: 100%; max-width: 900px; padding: 40px 20px; display: flex; flex-wrap: wrap; gap: 30px; }
+        
+        .back-btn { color: #ff5f00; text-decoration: none; font-size: 18px; font-weight: bold; display: block; margin-bottom: 20px; }
+        
+        .sidebar { flex: 1; min-width: 300px; }
+        .main-content { flex: 2; min-width: 320px; }
+
+        .user-card { background: #151517; padding: 30px; border-radius: 24px; border: 1px solid #222; position: sticky; top: 40px; }
+        .label { color: #666; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; }
+        .val { font-size: 28px; font-weight: bold; margin-bottom: 20px; color: #ff5f00; }
+
+        .history-item { background: #1c1c1e; padding: 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-left: 5px solid #333; transition: 0.2s; }
+        .history-item:hover { border-left-color: #ff5f00; background: #222; }
+        .hist-info div:first-child { font-weight: bold; font-size: 16px; margin-bottom: 4px; }
+        .hist-info div:last-child { font-size: 12px; color: #666; }
+        .hist-sum { font-weight: 800; font-size: 16px; text-align: right; }
+
+        @media (max-width: 768px) {
+            .app-wrapper { flex-direction: column; padding: 20px; }
+            .user-card { position: static; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-wrapper">
+        <!-- СЛЕВА: ИНФО -->
+        <div class="sidebar">
+            <a href="index.html" class="back-btn">← НА ГЛАВНУЮ</a>
+            <div class="user-card">
+                <div class="label">Ваш текущий баланс</div>
+                <div class="val" id="cabBal">0.00 BYN</div>
+                <div class="label">Привязанная карта</div>
+                <div id="cabNum" style="font-family: monospace; font-size: 16px; color: #aaa;">0000 0000 0000 0000</div>
+                <hr style="border: 0; border-top: 1px solid #333; margin: 25px 0;">
+                <p style="font-size: 13px; color: #555;">Все данные хранятся локально в вашем браузере.</p>
+            </div>
+        </div>
+
+        <!-- СПРАВА: ИСТОРИЯ -->
+        <div class="main-content">
+            <h2 style="margin-top:0; font-size: 24px;">История операций</h2>
+            <div id="historyBox"></div>
+        </div>
+    </div>
+
+    <script>
+        const balance = localStorage.getItem('balance') || "0.00";
+        const cardNum = localStorage.getItem('cardNumber') || "---";
+        const appCurrency = localStorage.getItem('appCurrency') || "BYN";
+        const history = JSON.parse(localStorage.getItem('transfers') || "[]");
+
+        document.getElementById('cabBal').innerText = parseFloat(balance).toLocaleString('ru-RU', {minimumFractionDigits: 2}) + " " + appCurrency;
+        document.getElementById('cabNum').innerText = cardNum;
+
+        const container = document.getElementById('historyBox');
+        if(history.length === 0) {
+            container.innerHTML = '<div style="background:#111; padding:40px; border-radius:20px; text-align:center; color:#444;">У вас пока нет транзакций</div>';
+        } else {
+            history.forEach(item => {
+                container.innerHTML += `
+                    <div class="history-item">
+                        <div class="hist-info">
+                            <div>${item.name}</div>
+                            <div>${item.date} • ${item.target}</div>
+                        </div>
+                        <div class="hist-sum">-${item.amount} ${item.currency}</div>
+                    </div>
+                `;
+            });
+        }
+    </script>
+</body>
+</html>
